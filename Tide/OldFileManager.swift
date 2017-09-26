@@ -125,33 +125,31 @@ class OldFileManager {
 				
 				guard color != oldColor else { continue }
 				
-				if options.verbose {
-					if options.simulate {
-						print("\(relativePath): would mark \(color)")
-					} else {
+				if options.setColors {
+					if options.verbose {
 						print("\(relativePath): marking \(color)")
 					}
-				}
-				
-				if let data = color.data() {
-					data.withUnsafeBytes { bytes in
-						_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
+					
+					if let data = color.data() {
+						data.withUnsafeBytes { bytes in
+							_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
+						}
+					} else {
+						removexattr(url.path, XATTR_FINDERINFO_NAME, 0)
 					}
 				} else {
-					removexattr(url.path, XATTR_FINDERINFO_NAME, 0)
+					if options.verbose {
+						print("\(relativePath): would mark \(color)")
+					}
 				}
 				
 			case .delete:
 				if options.deleteOldItems {
-					if options.simulate {
-						print("\(relativePath): would delete")
-					} else {
-						print("\(relativePath): deleting")
-						
-						try fm.removeItem(at: url)
-					}
+					print("\(relativePath): deleting")
+					
+					try fm.removeItem(at: url)
 				} else {
-					print("\(relativePath): could delete")
+					print("\(relativePath): would delete")
 				}
 			}
 		}

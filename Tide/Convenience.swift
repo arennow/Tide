@@ -29,21 +29,23 @@ func usage() {
 	struct Flag {
 		let label: String
 		let description: String
+		let required: Bool
 		
-		init(_ label: String, _ description: String) {
+		init(_ label: String, _ description: String, required: Bool = false) {
 			self.label = label
 			self.description = description
+			self.required = required
 		}
 	}
 	
 	let options = [
+		Flag("c", "Change colors of items whose modification time is newer than four weeks"),
 		Flag("d", "Delete items whose modification time is older than four weeks"),
-		Flag("s", "Simulate (don't make any changes)"),
-		Flag("v", "Verbose"),
-		Flag("p", "Specify the path to scan (Required)")
+		Flag("v", "Print color change information"),
+		Flag("p", "Specify the path to scan (Required)", required: true)
 	]
 	
-	let flagSummary = "[-d] [-s] [-v] -p"
+	let flagSummary = options.map({ $0.required ? "-\($0.label)" : "[-\($0.label)]" }).joined(separator: " ")
 	
 	print("Usage: \(CommandLine.arguments[0]) \(flagSummary)")
 	for flag in options {

@@ -16,8 +16,8 @@ struct Options: CustomStringConvertible {
 	}
 	
 	var rootURL: URL! = nil
+	var setColors: Bool = false
 	var deleteOldItems: Bool = false
-	var simulate: Bool = false
 	var verbose: Bool = false
 	
 	func checkComplete() throws {
@@ -42,13 +42,13 @@ struct Options: CustomStringConvertible {
 
 private var options = Options()
 
-while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hdsvp:"), option != -1 {
+while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hcdvp:"), option != -1 {
 	switch UnicodeScalar(CUnsignedChar(option)) {
+	case "c":
+		options.setColors = true
+		
 	case "d":
 		options.deleteOldItems = true
-		
-	case "s":
-		options.simulate = true
 		
 	case "p":
 		guard let pathString = (optarg as Optional).map({ String(cString: $0) }) else {
