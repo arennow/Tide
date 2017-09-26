@@ -8,5 +8,77 @@
 
 import Foundation
 
-print("Hello, World!")
+struct Options: CustomStringConvertible {
+	enum Errors: String, Error, CustomStringConvertible {
+		case missingRootPath = "Missing root path"
+		
+		var description: String { return self.rawValue }
+	}
+	
+	var rootURL: URL! = nil
+	var deleteOldItems: Bool = false
+	var simulate: Bool = false
+	var verbosity: UInt = 0
+	
+	func checkComplete() throws {
+		if self.rootURL == nil {
+			throw Errors.missingRootPath
+		}
+	}
+	
+	var isComplete: Bool {
+		do {
+			try self.checkComplete()
+			return true
+		} catch {
+			return false
+		}
+	}
+	
+	var description: String {
+		return "<Options rootURL: '\(self.rootURL?.description ?? "No rootPath")' destroy: \(self.deleteOldItems)>"
+	}
+}
 
+private var options = Options()
+
+while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hdsvp:"), option != -1 {
+	switch UnicodeScalar(CUnsignedChar(option)) {
+	case "d":
+		options.deleteOldItems = true
+		
+	case "s":
+		options.simulate = true
+		
+	case "p":
+		guard let pathString = (optarg as Optional).map({ String(cString: $0) }) else {
+			stderrFatalError("Path string unreadable")
+		}
+		
+		options.rootURL = URL(fileURLWithPath: pathString)
+		
+	case "v":
+		options.verbosity += 1
+		
+	case "h":
+		usage()
+		exit(-1)
+		
+	default:
+		usage()
+		exit(-2)
+	}
+}
+
+do {
+	try options.checkComplete()
+} catch {
+	stderrFatalError(String(describing: error), includeUsage: true)
+}
+
+do {
+	let oldMan = OldFileManager(rootURL: options.rootURL)
+	try oldMan.scan(options: options)
+} catch {
+	stderrFatalError(String(describing: error))
+}
