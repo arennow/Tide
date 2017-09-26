@@ -18,7 +18,7 @@ struct Options: CustomStringConvertible {
 	var rootURL: URL! = nil
 	var deleteOldItems: Bool = false
 	var simulate: Bool = false
-	var verbosity: UInt = 0
+	var verbose: Bool = false
 	
 	func checkComplete() throws {
 		if self.rootURL == nil {
@@ -58,7 +58,7 @@ while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hdsvp:
 		options.rootURL = URL(fileURLWithPath: pathString)
 		
 	case "v":
-		options.verbosity += 1
+		options.verbose = true
 		
 	case "h":
 		usage()

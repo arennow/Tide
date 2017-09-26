@@ -40,11 +40,10 @@ func usage() {
 		Flag("d", "Delete items whose modification time is older than four weeks"),
 		Flag("s", "Simulate (don't make any changes)"),
 		Flag("v", "Verbose"),
-		Flag("vv", "Very verbose"),
 		Flag("p", "Specify the path to scan (Required)")
 	]
 	
-	let flagSummary = "[-d] [-s] [-v[v]] -p"
+	let flagSummary = "[-d] [-s] [-v] -p"
 	
 	print("Usage: \(CommandLine.arguments[0]) \(flagSummary)")
 	for flag in options {

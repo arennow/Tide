@@ -16,16 +16,20 @@ class OldFileManager {
 			case orange
 			case red
 			
+			private var distinguishingByte: UInt8? {
+				switch self {
+				case .none:		return nil
+				case .yellow:	return 0x0a
+				case .orange:	return 0x0e
+				case .red:		return 0x0c
+				}
+			}
+			
 			func data() -> Data? {
 				var sourceData = Array<UInt8>(repeating: 0, count: 32)
 				
-				let ninthByte: UInt8
-				
-				switch self {
-				case .none:		return nil
-				case .yellow:	ninthByte = 0x0a
-				case .orange:	ninthByte = 0x0e
-				case .red:		ninthByte = 0x0c
+				guard let ninthByte = self.distinguishingByte else {
+					return nil
 				}
 				
 				sourceData[9] = ninthByte
@@ -33,6 +37,23 @@ class OldFileManager {
 				let data = Data(sourceData)
 				precondition(data.count == 32)
 				return data
+			}
+			
+			init?(data: Data?) {
+				guard let data = data else {
+					return nil
+				}
+				
+				let ninthByte = data.withUnsafeBytes { (ptr) -> UInt8 in
+					return ptr[9]
+				}
+				
+				switch ninthByte {
+				case Color.yellow.distinguishingByte!: self = .yellow
+				case Color.orange.distinguishingByte!: self = .orange
+				case Color.red.distinguishingByte!: self = .red
+				default: return nil
+				}
 			}
 		}
 		
@@ -83,25 +104,28 @@ class OldFileManager {
 			
 			switch fate {
 			case .keep(let color):
-//				let oldValue: Fate.Color?
-//				do {
-//					let dataSize = getxattr(url.path, XATTR_FINDERINFO_NAME, nil, 0, 0, 0)
-//					if dataSize > 0 {
-//						withHeapMemory(ofLength: dataSize) { (ptr, length) in
-//							let res = getxattr(url.path, XATTR_FINDERINFO_NAME, ptr, length, 0, 0)
-//
-//							if res != -1 {
-//
-//							} else {
-//								oldValue = nil
-//							}
-//						}
-//					} else {
-//						oldValue = nil
-//					}
-//				}
+				let oldColor: Fate.Color = {
+					let dataSize = getxattr(url.path, XATTR_FINDERINFO_NAME, nil, 0, 0, 0)
+					if dataSize > 0 {
+						return withHeapMemory(ofLength: dataSize) { (ptr: UnsafeMutablePointer<UInt8>, length) in
+							let res = getxattr(url.path, XATTR_FINDERINFO_NAME, ptr, length, 0, 0)
+							
+							if res != -1 {
+								let data = Data(bytesNoCopy: ptr, count: length, deallocator: .none)
+								
+								return Fate.Color(data: data) ?? .none
+							} else {
+								return .none
+							}
+						}
+					} else {
+						return .none
+					}
+				}()
 				
-				if options.verbosity >= 2 {
+				guard color != oldColor else { continue }
+				
+				if options.verbose {
 					if options.simulate {
 						print("\(relativePath): would mark \(color)")
 					} else {
@@ -120,20 +144,14 @@ class OldFileManager {
 			case .delete:
 				if options.deleteOldItems {
 					if options.simulate {
-						if options.verbosity >= 1 {
-							print("\(relativePath): would delete")
-						}
+						print("\(relativePath): would delete")
 					} else {
-						if options.verbosity >= 1 {
-							print("\(relativePath): deleting")
-						}
+						print("\(relativePath): deleting")
 						
 						try fm.removeItem(at: url)
 					}
 				} else {
-					if options.verbosity >= 1 {
-						print("\(relativePath): could delete")
-					}
+					print("\(relativePath): could delete")
 				}
 			}
 		}
