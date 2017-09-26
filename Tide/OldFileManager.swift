@@ -10,22 +10,29 @@ import Foundation
 
 class OldFileManager {
 	fileprivate enum Fate {
-		enum Color: String {
-			case none	= ""
-			case yellow	= "<00 00 00 00 00 00 00 00 00 0A 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00>"
-			case orange	= "<00 00 00 00 00 00 00 00 00 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00>"
-			case red	= "<00 00 00 00 00 00 00 00 00 0C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00>"
+		enum Color {
+			case none
+			case yellow
+			case orange
+			case red
 			
-			func data() -> Data {
+			func data() -> Data? {
+				var sourceData = Array<UInt8>(repeating: 0, count: 32)
+				
+				let ninthByte: UInt8
+				
 				switch self {
-				case .none:
-					return Data()
-					
-				default:
-					let data = self.rawValue.propertyList() as! NSData as Data
-					precondition(data.count == 32)
-					return data
+				case .none:		return nil
+				case .yellow:	ninthByte = 0x0a
+				case .orange:	ninthByte = 0x0e
+				case .red:		ninthByte = 0x0c
 				}
+				
+				sourceData[9] = ninthByte
+				
+				let data = Data(sourceData)
+				precondition(data.count == 32)
+				return data
 			}
 		}
 		
@@ -102,9 +109,12 @@ class OldFileManager {
 					}
 				}
 				
-				let data = color.data()
-				data.withUnsafeBytes { bytes in
-					_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
+				if let data = color.data() {
+					data.withUnsafeBytes { bytes in
+						_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
+					}
+				} else {
+					removexattr(url.path, XATTR_FINDERINFO_NAME, 0)
 				}
 				
 			case .delete:
