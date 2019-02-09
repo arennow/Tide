@@ -53,7 +53,7 @@ struct Options: CustomStringConvertible {
 
 private var options = Options()
 
-while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hc:ndvp:"), option != -1 {
+while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hc:ndvp:x"), option != -1 {
 	switch UnicodeScalar(CUnsignedChar(option)) {
 	case "c":
 		guard let pathString = (optarg as Optional).map({ String(cString: $0) }) else {
@@ -80,6 +80,18 @@ while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hc:ndv
 		
 	case "n":
 		options.noop = true
+		
+	case "x":
+		let example = """
+{
+	"yellow": "3d",
+	"orange": "1w",
+	"red"	: "10d",
+	"delete": "2w"
+}
+"""
+		print(example)
+		exit(0)
 		
 	default:
 		usage()

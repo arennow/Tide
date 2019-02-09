@@ -48,7 +48,8 @@ func usage() {
 	let options = [
 		Flag("d", "Enable deletion"),
 		Flag("v", "Enable verbosity"),
-		Flag("n", "No-op. Implies -v and disables -d"),	
+		Flag("n", "Take no actual actions. Implies -v and disables -d"),
+		Flag("x", "Print an example configuration to stdout"),
 		Flag("c", "Specify the configuration file path (Required)", required: true),
 		Flag("p", "Specify the path to scan (Required)", required: true)
 	]
