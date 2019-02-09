@@ -79,7 +79,9 @@ extension NSString {
 	}
 }
 
-protocol CustomErrorPrintable: Error, CustomStringConvertible, RawRepresentable where Self.RawValue == String {}
+protocol CustomErrorPrintable: Error, CustomStringConvertible {
+	var rawValue: String { get }
+}
 extension CustomErrorPrintable {
 	var description: String { return self.rawValue }
 }

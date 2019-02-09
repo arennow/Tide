@@ -66,6 +66,15 @@ struct AgeConfig: Decodable {
 		guard let json = FileManager.default.contents(atPath: url.path) else { throw Errors.noSuchFile }
 		
 		let decoder = JSONDecoder()
-		return try decoder.decode(self, from: json)
+		do {
+			return try decoder.decode(self, from: json)
+		} catch DecodingError.keyNotFound(let key, _) {
+			throw GeneralError(message: "Missing key: \(key.stringValue)")
+		} catch DecodingError.typeMismatch(_, let context) {
+			let pieces = [context.codingPath.last?.stringValue, context.debugDescription]
+			throw GeneralError(message: pieces.compactMap({$0}).joined(separator: ": "))
+		} catch {
+			throw error
+		}
 	}
 }
