@@ -108,7 +108,7 @@ do {
 }
 
 do {
-	let ageConfig = try AgeConfig.from(options.ageConfigURL)
+	let ageConfig = try AgeConfig.fromURL(options.ageConfigURL)
 	
 	let oldMan = OldFileManager(rootURL: options.rootURL, ageConfig: ageConfig)
 	try oldMan.scan(options: options)

@@ -62,7 +62,7 @@ struct AgeConfig: Decodable {
 		}
 	}
 	
-	static func from(_ url: URL) throws -> AgeConfig {
+	static func fromURL(_ url: URL) throws -> AgeConfig {
 		guard let json = FileManager.default.contents(atPath: url.path) else { throw Errors.noSuchFile }
 		
 		let decoder = JSONDecoder()
