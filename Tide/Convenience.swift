@@ -6,12 +6,19 @@
 //  Copyright © 2017 Lithiumcube. All rights reserved.
 //
 
-import Darwin
+#if os(Linux)
+	import Glibc
+#else
+	import Darwin
+#endif
+import Foundation
 
 struct STDERRStream: TextOutputStream {
 	mutating func write(_ string: String) {
 		string.withCString { ptr in
-			_ = vfprintf(stderr, ptr, getVaList([]))
+			withVaList([]) { valist in
+				_ = vfprintf(stderr, ptr, valist)
+			}
 		}
 	}
 }
@@ -39,9 +46,10 @@ func usage() {
 	}
 	
 	let options = [
-		Flag("c", "Change colors of items whose modification time is newer than four weeks"),
-		Flag("d", "Delete items whose modification time is older than four weeks"),
-		Flag("v", "Print color change information"),
+		Flag("d", "Enable deletion"),
+		Flag("v", "Enable verbosity"),
+		Flag("n", "No-op. Implies -v and disables -d"),	
+		Flag("c", "Specify the configuration file path (Required)", required: true),
 		Flag("p", "Specify the path to scan (Required)", required: true)
 	]
 	
@@ -62,4 +70,22 @@ func withHeapMemory<Pointee, Result>(ofLength length: Int, _ block: (UnsafeMutab
 	let bufPtr = UnsafeMutablePointer<Pointee>(opaquePtr)
 	
 	return try block(bufPtr, length)
+}
+
+extension NSString {
+	var fullRange: NSRange {
+		return NSRange(location: 0, length: self.length)
+	}
+}
+
+protocol CustomErrorPrintable: Error, CustomStringConvertible, RawRepresentable where Self.RawValue == String {}
+extension CustomErrorPrintable {
+	var description: String { return self.rawValue }
+}
+
+extension URL {
+	init(fileURLWithConventionalCLIPath conventionalCLIPath: String) {
+		let standardizedPath = (conventionalCLIPath as NSString).standardizingPath
+		self.init(fileURLWithPath: standardizedPath)
+	}
 }

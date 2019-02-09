@@ -9,20 +9,31 @@
 import Foundation
 
 struct Options: CustomStringConvertible {
-	enum Errors: String, Error, CustomStringConvertible {
+	enum Errors: String, CustomErrorPrintable {
 		case missingRootPath = "Missing root path"
-		
-		var description: String { return self.rawValue }
+		case missingConfigPath = "Missing age config path"
 	}
 	
 	var rootURL: URL! = nil
-	var setColors: Bool = false
+	var ageConfigURL: URL! = nil
+	var noop: Bool = false
 	var deleteOldItems: Bool = false
 	var verbose: Bool = false
 	
 	func checkComplete() throws {
+		if self.ageConfigURL == nil {
+			throw Errors.missingConfigPath
+		}
+		
 		if self.rootURL == nil {
 			throw Errors.missingRootPath
+		}
+	}
+	
+	mutating func finalize() {
+		if self.noop {
+			self.verbose = true
+			self.deleteOldItems = false
 		}
 	}
 	
@@ -42,10 +53,13 @@ struct Options: CustomStringConvertible {
 
 private var options = Options()
 
-while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hcdvp:"), option != -1 {
+while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hc:ndvp:"), option != -1 {
 	switch UnicodeScalar(CUnsignedChar(option)) {
 	case "c":
-		options.setColors = true
+		guard let pathString = (optarg as Optional).map({ String(cString: $0) }) else {
+			stderrFatalError("Path string unreadable")
+		}
+		options.ageConfigURL = URL(fileURLWithConventionalCLIPath: pathString)
 		
 	case "d":
 		options.deleteOldItems = true
@@ -55,7 +69,7 @@ while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hcdvp:
 			stderrFatalError("Path string unreadable")
 		}
 		
-		options.rootURL = URL(fileURLWithPath: pathString)
+		options.rootURL = URL(fileURLWithConventionalCLIPath: pathString)
 		
 	case "v":
 		options.verbose = true
@@ -64,11 +78,16 @@ while case let option = getopt(CommandLine.argc, CommandLine.unsafeArgv, "hcdvp:
 		usage()
 		exit(-1)
 		
+	case "n":
+		options.noop = true
+		
 	default:
 		usage()
 		exit(-2)
 	}
 }
+
+options.finalize()
 
 do {
 	try options.checkComplete()
@@ -77,7 +96,9 @@ do {
 }
 
 do {
-	let oldMan = OldFileManager(rootURL: options.rootURL)
+	let ageConfig = try AgeConfig.from(options.ageConfigURL)
+	
+	let oldMan = OldFileManager(rootURL: options.rootURL, ageConfig: ageConfig)
 	try oldMan.scan(options: options)
 } catch {
 	stderrFatalError(String(describing: error))

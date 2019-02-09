@@ -61,26 +61,36 @@ class OldFileManager {
 		case delete
 	}
 	
-	private static func fate(for date: Date) -> Fate {
-		let oneWeek: TimeInterval = 60*60*24*7
+	private func fate(for date: Date) -> Fate {
+		func daysAgo(_ days: Int) -> Date {
+			let oneDay: TimeInterval = 60*60*24
+			return Date(timeIntervalSinceNow: -oneDay * TimeInterval(days))
+		}
 		
-		if date > Date(timeIntervalSinceNow: -oneWeek) {
+		switch date {
+		case daysAgo(self.ageConfig.yellow.numberOfDays)...:
 			return .keep(.none)
-		} else if date > Date(timeIntervalSinceNow: -2*oneWeek) {
+			
+		case daysAgo(self.ageConfig.orange.numberOfDays)...:
 			return .keep(.yellow)
-		} else if date > Date(timeIntervalSinceNow: -3*oneWeek) {
+			
+		case daysAgo(self.ageConfig.red.numberOfDays)...:
 			return .keep(.orange)
-		} else if date > Date(timeIntervalSinceNow: -4*oneWeek) {
+			
+		case daysAgo(self.ageConfig.delete.numberOfDays)...:
 			return .keep(.red)
-		} else {
+			
+		default:
 			return .delete
 		}
 	}
 	
 	let rootURL: URL
+	let ageConfig: AgeConfig
 	
-	init(rootURL: URL) {
+	init(rootURL: URL, ageConfig: AgeConfig) {
 		self.rootURL = rootURL
+		self.ageConfig = ageConfig
 	}
 	
 	func scan(options: Options) throws {
@@ -100,7 +110,7 @@ class OldFileManager {
 			
 			let relativePath = url.pathComponents[rootComponentsCount...].joined()
 			
-			let fate = OldFileManager.fate(for: modificationDate)
+			let fate = self.fate(for: modificationDate)
 			
 			switch fate {
 			case .keep(let color):
@@ -125,11 +135,7 @@ class OldFileManager {
 				
 				guard color != oldColor else { continue }
 				
-				if options.setColors {
-					if options.verbose {
-						print("\(relativePath): marking \(color)")
-					}
-					
+				func apply() {
 					if let data = color.data() {
 						data.withUnsafeBytes { bytes in
 							_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
@@ -137,19 +143,37 @@ class OldFileManager {
 					} else {
 						removexattr(url.path, XATTR_FINDERINFO_NAME, 0)
 					}
-				} else {
-					if options.verbose {
-						print("\(relativePath): would mark \(color)")
-					}
+				}
+				
+				switch (options.verbose, options.deleteOldItems) {
+				case (true, true):
+					print("\(relativePath): marking \(color)")
+					fallthrough
+					
+				case (false, true):
+					apply()
+					
+				case (true, false):
+					print("\(relativePath): would mark \(color)")
+					
+				case (false, false):
+					break
 				}
 				
 			case .delete:
-				if options.deleteOldItems {
+				switch (options.verbose, options.deleteOldItems) {
+				case (true, true):
 					print("\(relativePath): deleting")
+					fallthrough
 					
+				case (false, true):
 					try fm.removeItem(at: url)
-				} else {
+					
+				case (true, false):
 					print("\(relativePath): would delete")
+					
+				case (false, false):
+					break
 				}
 			}
 		}
