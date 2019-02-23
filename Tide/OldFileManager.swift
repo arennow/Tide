@@ -171,7 +171,7 @@ class OldFileManager {
 					}
 				}
 				
-				switch (options.verbose, options.deleteOldItems) {
+				switch (options.verbose, !options.noop) {
 				case (true, true):
 					print("\(relativePath): marking \(color)")
 					fallthrough
