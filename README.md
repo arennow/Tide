@@ -13,11 +13,13 @@ Let's say you have a directory of files like this:
 
 If you were to run the command `tide -vc ~/.tideconfig.json -p .` (on February 23, 2019), you would see the following output:
 
-```squernop: would delete
+```
+squernop: would delete
 scrantold: marking orange
 llerzip: marking yellow
 genehack: marking red
-frangelous: marking yellow```
+frangelous: marking yellow
+```
 
 And you would see this in the Finder:
 ![The same series of files with Finder color labels indicating their modification dates](.readme_resources/two.png)
@@ -33,21 +35,25 @@ And this in the Finder:
 ### Configuration
 Tide takes a configuration file as a mandatory parameter. This file specifies the durations of time at which the various colors or deletion happen to the items in the specified directory. If you pass the `-x` flag to Tide, it will emit an example configuration to stdout:
 
-```{
+```
+{
 	"yellow": "3d",
 	"orange": "1w",
 	"red"	: "10d",
 	"delete": "2w"
-}```
+}
+```
 
 I personally use a config with a closer time horizon:
 
-```{
+```
+{
 	"yellow": "2d",
 	"orange": "5d",
 	"red"	: "1w",
 	"delete": "10d"
-}```
+}
+```
 
 ### Contributions
 Contributions are welcome, provided that you acknowledge that this project is in the public domain, and that you relinquish any right of ownership to your contributions when you submit them.
