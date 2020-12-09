@@ -70,9 +70,7 @@ class OldFileManager {
 					return nil
 				}
 				
-				let ninthByte = data.withUnsafeBytes { (ptr) -> UInt8 in
-					return ptr[9]
-				}
+				let ninthByte = data.withUnsafeBytes { $0[9] }
 				
 				switch ninthByte {
 				case Color.yellow.distinguishingByte!: self = .yellow
