@@ -162,7 +162,7 @@ class OldFileManager {
 				func apply() {
 					if let data = color.data() {
 						data.withUnsafeBytes { bytes in
-							_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes, data.count, 0, 0)
+							_ = setxattr(url.path, XATTR_FINDERINFO_NAME, bytes.baseAddress, data.count, 0, 0)
 						}
 					} else {
 						removexattr(url.path, XATTR_FINDERINFO_NAME, 0)
