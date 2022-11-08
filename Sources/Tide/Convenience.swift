@@ -88,17 +88,6 @@ func usage() {
 	}
 }
 
-func withHeapMemory<Pointee, Result>(ofLength length: Int, _ block: (UnsafeMutablePointer<Pointee>, Int) throws -> Result) rethrows -> Result {
-	let rawPtr = malloc(length)!
-	defer {
-		free(rawPtr)
-	}
-	let opaquePtr = OpaquePointer(rawPtr)
-	let bufPtr = UnsafeMutablePointer<Pointee>(opaquePtr)
-	
-	return try block(bufPtr, length)
-}
-
 protocol CustomErrorPrintable: Error, CustomStringConvertible {
 	var rawValue: String { get }
 }

@@ -65,14 +65,10 @@ class OldFileManager {
 				return data
 			}
 			
-			init?(data: Data?) {
-				guard let data = data else {
-					return nil
-				}
+			init?<C: Collection<UInt8>>(bytes: Optional<C>) where C.Index == Int {
+				guard let bytes, bytes.count >= 9 else { return nil }
 				
-				let ninthByte = data.withUnsafeBytes { $0[9] }
-				
-				switch ninthByte {
+				switch bytes[9] {
 				case Color.yellow.distinguishingByte!: self = .yellow
 				case Color.orange.distinguishingByte!: self = .orange
 				case Color.red.distinguishingByte!: self = .red
@@ -141,13 +137,13 @@ class OldFileManager {
 				let oldColor: Fate.Color = {
 					let dataSize = getxattr(url.path, XATTR_FINDERINFO_NAME, nil, 0, 0, 0)
 					if dataSize > 0 {
-						return withHeapMemory(ofLength: dataSize) { (ptr: UnsafeMutablePointer<UInt8>, length) in
-							let res = getxattr(url.path, XATTR_FINDERINFO_NAME, ptr, length, 0, 0)
+						return withUnsafeTemporaryAllocation(byteCount: dataSize, alignment: 2) { rawBuf in
+							let buf = rawBuf.bindMemory(to: UInt8.self)
+							
+							let res = getxattr(url.path, XATTR_FINDERINFO_NAME, buf.baseAddress, buf.count, 0, 0)
 							
 							if res != -1 {
-								let data = Data(bytesNoCopy: ptr, count: length, deallocator: .none)
-								
-								return Fate.Color(data: data) ?? .none
+								return Fate.Color(bytes: buf) ?? .none
 							} else {
 								return .none
 							}
