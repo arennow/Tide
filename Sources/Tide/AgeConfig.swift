@@ -67,24 +67,15 @@ struct AgeConfig: Decodable {
 		
 		init(from decoder: Decoder) throws {
 			let container = try decoder.singleValueContainer()
-			let rawSwift = try container.decode(String.self)
-			let rawObjc = rawSwift as NSString
+			let string = try container.decode(String.self)
 			
-			let regex = try! NSRegularExpression(pattern: "^(\\d+)(\\w+)$", options: [])
-			let match = regex.firstMatch(in: rawSwift, options: [], range: rawObjc.fullRange)
+			guard let match = try /^(\d+)(\w+)$/.firstMatch(in: string) else { throw Errors.badFormat }
 			
-			if let match = match, match.numberOfRanges == 3 { // The first one is the whole match
-				let quantityString = rawObjc.substring(with: match.range(at: 1))
-				guard let quantity = Int(quantityString) else { throw Errors.unintelligible }
-				self.quantity = quantity
-				
-				
-				let unitString = rawObjc.substring(with: match.range(at: 2))
-				guard let unit = Unit(rawValue: unitString) else { throw Errors.unintelligible }
-				self.unit = unit
-			} else {
-				throw Errors.badFormat
-			}
+			guard let quantity = Int(match.1) else { throw Errors.unintelligible }
+			self.quantity = quantity
+			
+			guard let unit = Unit(rawValue: String(match.2)) else { throw Errors.unintelligible }
+			self.unit = unit
 		}
 	}
 	

@@ -99,12 +99,6 @@ func withHeapMemory<Pointee, Result>(ofLength length: Int, _ block: (UnsafeMutab
 	return try block(bufPtr, length)
 }
 
-extension NSString {
-	var fullRange: NSRange {
-		return NSRange(location: 0, length: self.length)
-	}
-}
-
 protocol CustomErrorPrintable: Error, CustomStringConvertible {
 	var rawValue: String { get }
 }

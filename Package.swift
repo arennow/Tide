@@ -4,19 +4,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "Tide",
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
-        .executableTarget(
-            name: "Tide",
-            dependencies: []),
-        .testTarget(
-            name: "TideTests",
-            dependencies: ["Tide"]),
-    ]
+	name: "Tide",
+	platforms: [.macOS(.v13)],
+	dependencies: [
+		// Dependencies declare other packages that this package depends on.
+		// .package(url: /* package url */, from: "1.0.0"),
+	],
+	targets: [
+		// Targets are the basic building blocks of a package. A target can define a module or a test suite.
+		// Targets can depend on other targets in this package, and on products in packages this package depends on.
+		.executableTarget(
+			name: "Tide",
+			dependencies: [],
+			swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]),
+		.testTarget(
+			name: "TideTests",
+			dependencies: ["Tide"]),
+	]
 )
