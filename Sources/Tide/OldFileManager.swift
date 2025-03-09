@@ -34,7 +34,7 @@
 
 import Foundation
 
-class OldFileManager {
+struct OldFileManager {
 	fileprivate enum Fate {
 		enum Color {
 			case none
@@ -119,18 +119,29 @@ class OldFileManager {
 		let rootComponentsCount = options.rootURL.pathComponents.count
 
 		let conts = try fm.contentsOfDirectory(at: self.rootURL,
-											   includingPropertiesForKeys: [.contentModificationDateKey],
+											   includingPropertiesForKeys: [
+											   	.contentModificationDateKey,
+											   	.isUserImmutableKey,
+											   ],
 											   options: .skipsHiddenFiles)
 
 		for url in conts {
-			guard let modificationDate: Date = try url.resource(for: .contentModificationDateKey) else {
-				print("Couldn't get modification date for \(url)")
+			guard let modificationDate: Date = try url.resource(for: .contentModificationDateKey),
+				  let isLocked: Bool = try url.resource(for: .isUserImmutableKey)
+			else {
+				print("Couldn't get file properties for \(url)")
 				continue
 			}
 
 			let relativePath = url.pathComponents[rootComponentsCount...].joined()
 
-			let fate = self.fate(for: modificationDate)
+			let fate: Fate
+
+			if isLocked {
+				fate = .keep(.none)
+			} else {
+				fate = self.fate(for: modificationDate)
+			}
 
 			switch fate {
 				case .keep(let color):
